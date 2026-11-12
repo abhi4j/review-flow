@@ -6,3 +6,5 @@ tests
 evals
 **/__pycache__
 .*_cache
+docs
+.github

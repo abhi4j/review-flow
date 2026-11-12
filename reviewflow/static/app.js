@@ -30,8 +30,12 @@ function unitOf(name) {
   return "count";
 }
 
+// Values that round to zero at display precision show as zero, never "-0.0h".
+const visible = (value) => Math.abs(value) >= 0.05;
+
 function fmt(value, unit) {
   if (value === null || value === undefined) return "–";
+  if (!visible(value)) value = 0;
   switch (unit) {
     case "hours": return Math.abs(value) >= 48 ? `${(value / 24).toFixed(1)} days` : `${value.toFixed(1)}h`;
     case "percent": return `${Math.round(value * 10) / 10}%`;
@@ -111,7 +115,7 @@ function withReferences(template, references) {
 // ---- Report -----------------------------------------------------------------------
 
 function signed(value, unit) {
-  return `${value > 0 ? "+" : ""}${fmt(value, unit)}`;
+  return `${visible(value) && value > 0 ? "+" : ""}${fmt(value, unit)}`;
 }
 
 function intervalTitle(ci, significant, unit) {
@@ -120,9 +124,10 @@ function intervalTitle(ci, significant, unit) {
   return significant ? `${range}.` : `${range}: within noise.`;
 }
 
-// Only changes whose interval excludes zero are coloured; the rest read as noise.
+// Coloured only when the interval excludes zero and the change is big enough to show;
+// the rest read as noise.
 function tone(delta, significant, polarity) {
-  if (!significant || delta === 0 || polarity === "neutral") return "flat";
+  if (!significant || !visible(delta) || polarity === "neutral") return "flat";
   return (polarity === "lower" ? delta < 0 : delta > 0) ? "better" : "worse";
 }
 

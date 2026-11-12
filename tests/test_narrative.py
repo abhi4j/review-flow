@@ -69,6 +69,7 @@ def test_null_metrics_are_not_facts(insight):
     (26.7, "pp", True, "+26.7 pp"),
     (1.25, "ratio", False, "1.2×"),  # noqa: RUF001
     (1200, "lines", False, "1,200 lines"),
+    (-0.03, "hours", True, "0.0h"),  # below display precision: no sign
 ])
 def test_format_value(value, unit, signed, expected):
     assert format_value(value, unit, signed=signed) == expected

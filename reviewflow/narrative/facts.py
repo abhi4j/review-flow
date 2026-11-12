@@ -72,6 +72,8 @@ def _trim(value: float) -> str:
 
 
 def format_value(value: Number, unit: Unit, *, signed: bool = False) -> str:
+    if abs(value) < 0.05:
+        value = 0  # below display precision; avoids "-0.0h" and "+0.0h"
     sign = "+" if signed and value > 0 else ""
     match unit:
         case "hours":

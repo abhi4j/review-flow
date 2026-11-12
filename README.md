@@ -1,10 +1,15 @@
 # Review Flow
 
+[![CI](https://github.com/abhi4j/review-flow/actions/workflows/ci.yml/badge.svg)](https://github.com/abhi4j/review-flow/actions/workflows/ci.yml)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
+
 Review Flow looks at a GitHub repository's pull requests and reviews and tells you how
 code review is going: how long PRs wait before someone reviews them, who is doing the
 reviewing, and what changed compared with the previous period. A second endpoint uses an
 LLM to explain the change in a few sentences, with a likely cause and the numbers that
 support it.
+
+![Review Flow on astral-sh/uv: the explanation and likely cause, with the evidence behind it](docs/screenshot.png)
 
 ## Why
 
@@ -39,6 +44,33 @@ Here is what it said about `astral-sh/uv` for October 2026:
 > queueing for it, which mechanically removed the review wait and halved the median cycle
 > while leaving first-review time flat. The shorter cycle is therefore not faster
 > reviewing; it is less reviewing.
+
+## How it works
+
+```mermaid
+flowchart LR
+  UI[Browser or curl] --> API[FastAPI]
+  API --> Sync[Sync]
+  Sync -- "PRs and reviews,<br/>only what changed" --> GH[(GitHub GraphQL)]
+  Sync --> DB[(SQLite)]
+  DB --> Metrics[Metrics and<br/>intervals]
+  Metrics --> API
+  Metrics --> Facts[Fact table]
+  Facts --> LLM[(LLM)]
+  LLM --> Check[Validator]
+  Check -- "rejected: one retry<br/>with the reasons" --> LLM
+  Check -- "accepted: server<br/>fills in the numbers" --> API
+```
+
+A request first makes sure SQLite holds the repository's PRs for the period and the one
+before it, fetching from GitHub only what changed since the last sync. The metrics are
+computed from SQLite. For the narrative, every number in the metrics becomes a fact with
+an id; the LLM sees only those facts (no PR titles or other text from GitHub, so there is
+nothing to inject instructions through) and writes references like
+`{{summary.ttfr_p50_hours.delta}}` where it wants a number. The validator rejects
+unknown references, numbers typed by the model, and hypotheses with no significant change
+behind them, gives the model one retry, and otherwise returns an error rather than an
+unchecked answer.
 
 ## Setup
 
@@ -87,6 +119,10 @@ Open http://localhost:8000, enter a repository such as `pydantic/pydantic`, and 
 period. The first request for a repository fetches its PR history from GitHub, which
 takes a few seconds for a small project and a couple of minutes for a busy one. After
 that the data comes from SQLite and only new activity is fetched.
+
+Every number in the explanation links back to the metric it came from:
+
+![Analysing astral-sh/uv, then following a piece of evidence to its metric](docs/demo.gif)
 
 To check your changes:
 
@@ -169,6 +205,7 @@ reviewflow/
   narrative/     fact table, prompt, LLM client, answer validation
   static/        the web UI
 evals/           simulated repositories and the eval runner
+docs/            screenshots for this README
 tests/           tests against a fake GitHub and a scripted LLM
 ```
 
