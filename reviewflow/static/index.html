@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review Flow</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <h1 class="product">Review flow</h1>
+    <form id="query" class="query" autocomplete="off">
+      <label class="field">
+        <span>Repository</span>
+        <input id="repo" name="repo" placeholder="owner/name" required
+               pattern="[A-Za-z0-9][A-Za-z0-9\-]{0,38}/[A-Za-z0-9._\-]{1,100}"
+               title="owner/name, for example fastapi/fastapi">
+      </label>
+      <label class="field">
+        <span>Period</span>
+        <select id="days" name="days">
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </label>
+      <button type="submit" id="analyse">Analyse</button>
+    </form>
+  </header>
+
+  <main>
+    <p id="status" class="status" role="status" aria-live="polite">
+      Pick a public GitHub repository to see who carries its code reviews and how long pull
+      requests wait for them.
+    </p>
+
+    <section id="note" class="note" hidden aria-labelledby="note-headline">
+      <div class="note-body">
+        <h2 id="note-headline" class="note-headline"></h2>
+        <p id="note-text" class="note-text"></p>
+        <ul id="observations" class="observations"></ul>
+      </div>
+      <aside id="hypothesis" class="hypothesis" hidden aria-label="Root-cause hypothesis">
+        <h3>Likely cause</h3>
+        <p id="hyp-statement" class="hyp-statement"></p>
+        <div class="confidence">
+          <div class="meter" aria-hidden="true">
+            <span id="meter-fill" class="meter-fill"></span>
+            <span id="meter-cap" class="meter-cap"></span>
+          </div>
+          <p id="confidence-text" class="confidence-text"></p>
+        </div>
+        <h4>Evidence</h4>
+        <ul id="evidence" class="evidence"></ul>
+        <h4>Other explanations</h4>
+        <ul id="alternatives" class="alternatives"></ul>
+        <h4>How to check</h4>
+        <p id="verify"></p>
+      </aside>
+    </section>
+
+    <section id="report" class="report" hidden>
+      <div class="block">
+        <h2>Flow</h2>
+        <p class="caption" id="period-caption"></p>
+        <table class="metrics">
+          <thead><tr><th scope="col">Metric</th><th scope="col">This period</th>
+            <th scope="col">Previous</th><th scope="col">Change</th></tr></thead>
+          <tbody id="metrics"></tbody>
+        </table>
+        <p class="caption">Changes are coloured only when their 95% interval excludes zero;
+          hover a change for its interval.</p>
+      </div>
+
+      <div class="block">
+        <h2>What moved the wait for first review</h2>
+        <p class="caption">The change in median wait, split into a shift in which PRs were
+          merged and the same kinds of PR waiting longer. The two parts add up to the
+          change.</p>
+        <table class="segments"><thead><tr><th scope="col">Split</th>
+          <th scope="col">Different PRs merged</th><th scope="col">Same PRs, longer wait</th>
+          </tr></thead><tbody id="drivers"></tbody></table>
+      </div>
+
+      <div class="block">
+        <h2>Who reviews</h2>
+        <p class="caption">Share of PR reviews this period. The thin mark is the previous
+          period.</p>
+        <ol id="reviewers" class="reviewers"></ol>
+      </div>
+
+      <div class="block split">
+        <div>
+          <h2>By PR size</h2>
+          <table class="segments"><thead><tr><th scope="col">Size</th><th scope="col">PRs</th>
+            <th scope="col">Wait for review</th><th scope="col">vs. all</th></tr></thead>
+            <tbody id="by-size"></tbody></table>
+        </div>
+        <div>
+          <h2>By author</h2>
+          <table class="segments"><thead><tr><th scope="col">Author</th><th scope="col">PRs</th>
+            <th scope="col">Wait for review</th><th scope="col">vs. all</th></tr></thead>
+            <tbody id="by-author"></tbody></table>
+        </div>
+      </div>
+
+      <div class="block split">
+        <div>
+          <h2>Longest waits</h2>
+          <ul id="slowest" class="prs"></ul>
+        </div>
+        <div>
+          <h2>Merged without review</h2>
+          <ul id="unreviewed" class="prs"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <span id="as-of"></span>
+    <a href="/docs">API reference</a>
+  </footer>
+</body>
+</html>
